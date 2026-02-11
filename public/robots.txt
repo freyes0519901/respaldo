@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /registro
+Allow: /dashboard
+Allow: /dashboard/tipsters
+Allow: /dashboard/apuestas
+Allow: /dashboard/suscripcion
+Allow: /dashboard/academia
+
+Disallow: /admin
+Disallow: /api/
+Disallow: /reset-password
+Disallow: /dashboard/cambiar-password
+Disallow: /dashboard/pago-resultado
+
+Sitemap: https://neurotips.io/sitemap.xml

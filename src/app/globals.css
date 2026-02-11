@@ -1,0 +1,488 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   ELITE BETTING VAULT - PALETA PREMIUM
+   ============================================ */
+:root {
+  /* Fondos */
+  --bg-base: #0F172A;
+  --bg-card: #1E293B;
+  --bg-elevated: #334155;
+  
+  /* Primario - Teal (Éxito/CTA) */
+  --teal-500: #00D1B2;
+  --teal-600: #00B89C;
+  --teal-glow: rgba(0, 209, 178, 0.3);
+  
+  /* Acento - Oro (Premium) */
+  --gold-400: #FFDD57;
+  --gold-500: #F5C518;
+  --gold-glow: rgba(255, 221, 87, 0.3);
+  
+  /* Danger */
+  --red-500: #EF4444;
+  --red-glow: rgba(239, 68, 68, 0.2);
+  
+  /* Textos */
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  
+  /* Bordes */
+  --border-subtle: #334155;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Números y datos financieros */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* ============================================
+   COMPONENT STYLES - ELITE VAULT
+   ============================================ */
+@layer components {
+  /* Botón primario Teal */
+  .btn-primary {
+    @apply font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02];
+    background: linear-gradient(135deg, #00D1B2 0%, #00B89C 100%);
+    color: white;
+    box-shadow: 0 4px 15px var(--teal-glow);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 6px 25px var(--teal-glow);
+  }
+
+  /* Botón pulsante (CTA principal) */
+  .btn-pulse {
+    @apply font-bold py-4 px-8 rounded-xl transition-all duration-300;
+    background: linear-gradient(135deg, #00D1B2 0%, #00B89C 100%);
+    color: white;
+    animation: pulse-teal 2s ease-in-out infinite;
+  }
+
+  /* Botón oro premium */
+  .btn-gold {
+    @apply font-bold py-3 px-6 rounded-xl transition-all duration-300;
+    background: linear-gradient(135deg, #FFDD57 0%, #F5C518 100%);
+    color: #0F172A;
+    box-shadow: 0 4px 15px var(--gold-glow);
+  }
+
+  .btn-gold:hover {
+    box-shadow: 0 6px 25px var(--gold-glow);
+    transform: scale(1.02);
+  }
+
+  /* Botón outline */
+  .btn-outline {
+    @apply bg-transparent border border-slate-600 text-slate-300 font-medium py-2.5 px-5 rounded-xl 
+           transition-all duration-300 hover:border-teal-500 hover:text-teal-400;
+  }
+
+  /* Input field */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 
+           focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+  }
+
+  /* Card Elite */
+  .card-elite {
+    @apply rounded-2xl p-5 transition-all duration-300;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .card-elite:hover {
+    border-color: #475569;
+    transform: translateY(-2px);
+  }
+
+  /* Card Hero (destacada) */
+  .card-hero {
+    @apply rounded-2xl p-6 relative overflow-hidden;
+    background: linear-gradient(135deg, var(--bg-card) 0%, #253347 100%);
+    border: 1px solid rgba(0, 209, 178, 0.3);
+    box-shadow: 0 0 40px rgba(0, 209, 178, 0.1);
+  }
+
+  /* Card Premium (oro) */
+  .card-premium {
+    @apply rounded-2xl p-6 relative overflow-hidden;
+    background: linear-gradient(135deg, var(--bg-card) 0%, #2D2A1F 100%);
+    border: 1px solid rgba(255, 221, 87, 0.3);
+    box-shadow: 0 0 40px rgba(255, 221, 87, 0.1);
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply rounded-xl p-5 relative overflow-hidden transition-all duration-300;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .stat-card:hover {
+    border-color: #475569;
+  }
+
+  /* Badge Teal (Ganada/Éxito) */
+  .badge-success {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+    background: linear-gradient(135deg, rgba(0, 209, 178, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
+    color: #00D1B2;
+    border: 1px solid rgba(0, 209, 178, 0.3);
+  }
+
+  /* Badge Oro (Premium) */
+  .badge-gold {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+    background: linear-gradient(135deg, rgba(255, 221, 87, 0.2) 0%, rgba(245, 197, 24, 0.2) 100%);
+    color: #FFDD57;
+    border: 1px solid rgba(255, 221, 87, 0.3);
+  }
+
+  /* Badge Danger */
+  .badge-danger {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+    background: rgba(239, 68, 68, 0.15);
+    color: #F87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  /* Badge Info */
+  .badge-info {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+    background: rgba(59, 130, 246, 0.15);
+    color: #60A5FA;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  /* Badge Live */
+  .badge-live {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold;
+    background: rgba(239, 68, 68, 0.2);
+    color: #F87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+  }
+
+  .badge-live::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #EF4444;
+    border-radius: 50%;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+
+  /* Badge IA Approved */
+  .badge-ia {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
+    background: linear-gradient(135deg, rgba(0, 209, 178, 0.2) 0%, rgba(0, 209, 178, 0.1) 100%);
+    color: #00D1B2;
+    border: 1px solid rgba(0, 209, 178, 0.4);
+    box-shadow: 0 0 15px rgba(0, 209, 178, 0.2);
+  }
+
+  /* Badge deporte */
+  .badge-sport {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Trial Banner */
+  .trial-banner {
+    @apply rounded-xl p-4 relative overflow-hidden;
+    background: linear-gradient(135deg, #1E293B 0%, #2D2A1F 100%);
+    border: 1px solid rgba(255, 221, 87, 0.4);
+  }
+
+  /* Fila ganada */
+  .row-won {
+    background: rgba(0, 209, 178, 0.05);
+    border-left: 3px solid #00D1B2;
+  }
+
+  /* Fila perdida */
+  .row-lost {
+    background: rgba(239, 68, 68, 0.05);
+    border-left: 3px solid #EF4444;
+  }
+
+  /* Fila pendiente */
+  .row-pending {
+    background: transparent;
+    border-left: 3px solid var(--border-subtle);
+  }
+
+  /* Win Rate Circle */
+  .win-rate-circle {
+    @apply relative flex items-center justify-center;
+    width: 60px;
+    height: 60px;
+  }
+
+  .win-rate-circle svg {
+    transform: rotate(-90deg);
+  }
+
+  .win-rate-circle .percentage {
+    @apply absolute text-lg font-bold text-white font-mono;
+  }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes pulse-teal {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(0, 209, 178, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 30px rgba(0, 209, 178, 0.5);
+  }
+}
+
+@keyframes pulse-gold {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(255, 221, 87, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 30px rgba(255, 221, 87, 0.5);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes glow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* ★ WEEK 1: ShimmerButton sweep effect */
+@keyframes shimmerSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ★ WEEK 1: Glow pulse for cards hover */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 209, 178, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(0, 209, 178, 0.3); }
+}
+
+/* ★ WEEK 1: Border breathe for VIP card */
+@keyframes borderBreathe {
+  0%, 100% { border-color: rgba(255, 187, 0, 0.15); }
+  50% { border-color: rgba(255, 187, 0, 0.45); }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-pulse-teal {
+  animation: pulse-teal 2s ease-in-out infinite;
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Stagger */
+.stagger-1 { animation-delay: 0.05s; opacity: 0; }
+.stagger-2 { animation-delay: 0.1s; opacity: 0; }
+.stagger-3 { animation-delay: 0.15s; opacity: 0; }
+.stagger-4 { animation-delay: 0.2s; opacity: 0; }
+.stagger-5 { animation-delay: 0.25s; opacity: 0; }
+
+/* ============================================
+   SIDEBAR ACTIVE INDICATOR
+   ============================================ */
+.nav-active {
+  position: relative;
+  background: rgba(0, 209, 178, 0.1);
+  color: #00D1B2 !important;
+}
+
+.nav-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 70%;
+  background: #00D1B2;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 10px var(--teal-glow);
+}
+
+/* ============================================
+   MINI CHART (Sparkline)
+   ============================================ */
+.sparkline-up {
+  stroke: #00D1B2;
+  fill: none;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 4px var(--teal-glow));
+}
+
+.sparkline-down {
+  stroke: #EF4444;
+  fill: none;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 4px var(--red-glow));
+}
+
+/* ============================================
+   COUNTDOWN TIMER
+   ============================================ */
+.countdown-box {
+  @apply flex items-center justify-center rounded-lg font-mono text-2xl font-bold;
+  background: rgba(255, 221, 87, 0.1);
+  border: 1px solid rgba(255, 221, 87, 0.3);
+  color: #FFDD57;
+  min-width: 50px;
+  padding: 8px 12px;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ============================================
+   SELECTION
+   ============================================ */
+::selection {
+  background: #00D1B2;
+  color: white;
+}
+
+/* ============================================
+   TABLE HOVER
+   ============================================ */
+.table-row-hover {
+  @apply transition-all duration-200 cursor-pointer;
+}
+
+.table-row-hover:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ============================================
+   GRADIENT TEXTS
+   ============================================ */
+.text-gradient-teal {
+  background: linear-gradient(135deg, #00D1B2 0%, #10B981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #FFDD57 0%, #F5C518 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================================
+   MOBILE PERFORMANCE — Reduce backdrop-filter for low-end devices
+   ============================================================================ */
+@media (max-width: 768px) {
+  /* Reduce blur intensity on mobile for GPU performance */
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg {
+    -webkit-backdrop-filter: blur(4px) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+}
+
+/* Disable backdrop-filter entirely on very low-end devices */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
