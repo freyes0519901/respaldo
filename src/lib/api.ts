@@ -1,11 +1,12 @@
 /**
  * API Client - Conexión segura al backend
- * Versión 2.3 - NeuroScore + Picks Recomendados + Estadísticas Banca
+ * Versión 2.4 - NeuroScore + Picks Recomendados + Stats Públicos
  * 
- * CAMBIOS v2.3:
- * - apuestasAPI.getAnalisisHoy() → NeuroScore batch para Centro de Operaciones
- * - apuestasAPI.getAnalisisById() → NeuroScore individual
- * - picksAPI.getRecomendados() → Ahora conectado al backend real
+ * CAMBIOS v2.4:
+ * - statsAPI.getPublic() → Stats landing page (sin auth, cacheado)
+ * - miBancaAPI.getEstado() → Alias de getConfig (compatibilidad)
+ * - apuestasAPI.getAnalisisHoy() → NeuroScore batch
+ * - picksAPI.getRecomendados() → Backend real
  * - miBancaAPI.getEstadisticas() → Estadísticas completas por periodo
  * - misApuestasAPI.eliminar() → Endpoint DELETE conectado
  */
@@ -17,20 +18,17 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://franciscoanalistadep
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 
-// Cargar tokens de localStorage al iniciar
 if (typeof window !== 'undefined') {
   accessToken = localStorage.getItem('token');
   refreshToken = localStorage.getItem('refresh_token');
 }
 
-// Cliente para endpoints protegidos (con JWT)
 const api: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
 
-// Cliente para endpoints públicos (sin JWT)
 const publicApi: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
@@ -136,7 +134,6 @@ export const authAPI = {
     return response.data;
   },
 
-  // ★ NUEVO Sprint 2: LOGIN SOCIAL — Google, Facebook, Apple, Twitter
   socialLogin: async (provider: 'google' | 'facebook' | 'apple' | 'twitter', token: string, extra?: { nombre?: string; email?: string }) => {
     const response = await publicApi.post(`/api/auth/social/${provider}`, {
       token,
@@ -148,16 +145,34 @@ export const authAPI = {
     return response.data;
   },
 
-  // ★ NUEVO Sprint 2: COMUNIDAD — Marcar que se unió a Telegram o WhatsApp
   joinCommunity: async (canal: 'telegram' | 'whatsapp') => {
     const response = await api.post('/api/auth/community/join', { canal });
     return response.data;
   },
 
-  // ★ NUEVO Sprint 2: Verificar si el usuario está en alguna comunidad
   checkCommunity: async () => {
     const response = await api.get('/api/auth/community/status');
     return response.data;
+  },
+};
+
+// ============================================================================
+// STATS PÚBLICOS API (v2.4 — Landing page, sin auth)
+// ============================================================================
+export const statsAPI = {
+  getPublic: async () => {
+    try {
+      const response = await publicApi.get('/api/public/stats');
+      return response.data;
+    } catch {
+      return {
+        total_picks: 991,
+        win_rate: 61.8,
+        roi_triple: 47.3,
+        total_tipsters: 32,
+        top_tipsters: [],
+      };
+    }
   },
 };
 
@@ -169,7 +184,6 @@ export const dashboardAPI = {
     const response = await publicApi.get('/api/public/dashboard');
     return response.data;
   },
-  // ★ NUEVO v2.3: Dashboard con NeuroScore incluido
   getDataIA: async () => {
     const response = await publicApi.get('/api/public/dashboard-ia');
     return response.data;
@@ -203,7 +217,6 @@ export const tipstersAPI = {
     if (!safeId || safeId <= 0 || safeId > 999999) {
       return null;
     }
-    
     try {
       const response = await api.get(`/api/tipsters/${safeId}`);
       return response.data;
@@ -216,7 +229,6 @@ export const tipstersAPI = {
       }
     }
   },
-  // ★ NUEVO v2.3: Perfiles IA de tipsters
   getProfiles: async () => {
     try {
       const response = await api.get('/api/tipster-profiles');
@@ -242,41 +254,43 @@ export const bancaAPI = {
 };
 
 // ============================================================================
-// MI BANCA API (v7 + v2.3)
+// MI BANCA API (v7 — configuración completa)
 // ============================================================================
 export const miBancaAPI = {
-  setup: async (data: {
-    banca_inicial: number;
-    perfil_riesgo: 'conservador' | 'moderado' | 'agresivo';
-    deportes_interes: string[];
-    casa_apuestas: string;
-    meta_mensual: number;
-  }) => {
-    const response = await api.post('/api/banca/setup', data);
+  getConfig: async () => {
+    const response = await api.get('/api/banca/config');
     return response.data;
   },
 
+  // Alias de getConfig para compatibilidad con mi-banca/picks/page.tsx
   getEstado: async () => {
-    try {
-      const response = await api.get('/api/banca/estado');
-      return response.data;
-    } catch {
-      return { onboarding_completo: false, banca_actual: 0, perfil_riesgo: 'moderado' };
-    }
+    const response = await api.get('/api/banca/config');
+    return response.data;
   },
 
-  actualizar: async (data: Partial<{
+  setup: async (data: Partial<{
+    banca_inicial: number;
     perfil_riesgo: string;
     deportes_interes: string[];
     casa_apuestas: string;
     meta_mensual: number;
     banca_actual: number;
   }>) => {
+    const response = await api.post('/api/banca/setup', data);
+    return response.data;
+  },
+
+  actualizar: async (data: Partial<{
+    banca_actual: number;
+    perfil_riesgo: string;
+    deportes_interes: string[];
+    casa_apuestas: string;
+    meta_mensual: number;
+  }>) => {
     const response = await api.put('/api/banca/actualizar', data);
     return response.data;
   },
 
-  // ★ NUEVO v2.3: Estadísticas completas (ahora conectado al backend)
   getEstadisticas: async (periodo: 'semana' | 'mes' | 'trimestre' | 'todo' = 'mes') => {
     const validPeriodos = ['semana', 'mes', 'trimestre', 'todo'];
     const safePeriodo = validPeriodos.includes(periodo) ? periodo : 'mes';
@@ -327,7 +341,6 @@ export const misApuestasAPI = {
     return response.data;
   },
 
-  // ★ NUEVO v2.3: Eliminar apuesta (ahora conectado al backend)
   eliminar: async (id: number) => {
     const safeId = Math.abs(Math.floor(Number(id)));
     if (!safeId) return null;
@@ -337,7 +350,7 @@ export const misApuestasAPI = {
 };
 
 // ============================================================================
-// PICKS RECOMENDADOS API (v7 + v2.3 — ahora conectado al backend)
+// PICKS RECOMENDADOS API (v7 + v2.3)
 // ============================================================================
 export const picksAPI = {
   getRecomendados: async () => {
@@ -348,7 +361,6 @@ export const picksAPI = {
       return { picks: [], total: 0, requiere_setup: false };
     }
   },
-  // ★ NUEVO v2.4: Picks en vivo y urgentes
   getLive: async () => {
     try {
       const response = await api.get('/api/picks/live');
@@ -387,7 +399,6 @@ export const apuestasAPI = {
     }
   },
 
-  // ★ NUEVO v2.3: NeuroScore batch para todas las apuestas del día
   getAnalisisHoy: async () => {
     try {
       const response = await api.get('/api/analisis-ia/hoy');
@@ -397,7 +408,6 @@ export const apuestasAPI = {
     }
   },
 
-  // ★ NUEVO v2.3: NeuroScore individual para una apuesta
   getAnalisisById: async (apuestaId: number) => {
     const safeId = Math.abs(Math.floor(Number(apuestaId)));
     if (!safeId) return null;

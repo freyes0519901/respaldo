@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, Search, TrendingUp, TrendingDown, Flame } from 'lucide-react';
+import {
+  Users, Search, TrendingUp, TrendingDown, Flame, Snowflake,
+  ChevronRight
+} from 'lucide-react';
 import { tipstersAPI } from '@/lib/api';
 
+// ═══════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════
 interface Tipster {
   id: number;
   alias: string;
@@ -17,357 +23,233 @@ interface Tipster {
   yield?: number;
   racha_actual?: number;
   tipo_racha?: string;
-  tipo_estrategia?: string;
 }
 
-const getDeporteIcon = (deporte: string) => {
-  const icons: { [key: string]: string } = {
-    'Futbol': '⚽',
-    'Tenis': '🎾',
-    'NBA': '🏀',
-    'Baloncesto': '🏀',
-    'Voleibol': '🏐',
-    'Mixto': '🎯',
-    'eSports': '🎮',
-    'Hockey': '🏒',
-    'Beisbol': '⚾'
-  };
-  return icons[deporte] || '🎯';
+// ═══════════════════════════════════════════════════
+// SECURITY
+// ═══════════════════════════════════════════════════
+const sanitize = (val: any, maxLen = 100): string => {
+  if (val === null || val === undefined) return '';
+  return String(val).replace(/[<>"'&]/g, '').slice(0, maxLen);
 };
 
-// Componente Círculo de Progreso Animado
-const CircularProgress = ({ 
-  percentage, 
-  size = 120, 
-  strokeWidth = 8,
-  isHot = false 
-}: { 
-  percentage: number; 
-  size?: number; 
-  strokeWidth?: number;
-  isHot?: boolean;
-}) => {
-  const [animatedPercentage, setAnimatedPercentage] = useState(0);
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (animatedPercentage / 100) * circumference;
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimatedPercentage(percentage);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [percentage]);
-
-  // Color basado en porcentaje
-  const getColor = () => {
-    if (percentage >= 70) return '#00D1B2'; // Verde neón
-    if (percentage >= 60) return '#FFDD57'; // Dorado
-    if (percentage >= 50) return '#3B82F6'; // Azul
-    return '#EF4444'; // Rojo
-  };
-
-  const color = getColor();
-
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Fondo del círculo */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="#334155"
-          strokeWidth={strokeWidth}
-        />
-        {/* Progreso */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
-          style={{
-            filter: isHot ? `drop-shadow(0 0 8px ${color})` : `drop-shadow(0 0 4px ${color}40)`
-          }}
-        />
-      </svg>
-      {/* Texto central */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span 
-          className="text-2xl font-bold font-mono"
-          style={{ color }}
-        >
-          {animatedPercentage.toFixed(1)}%
-        </span>
-        <span className="text-xs text-[#94A3B8]">Win Rate</span>
-      </div>
-      {/* Glow effect para rachas */}
-      {isHot && (
-        <div 
-          className="absolute inset-0 rounded-full animate-pulse"
-          style={{ 
-            background: `radial-gradient(circle, ${color}20 0%, transparent 70%)` 
-          }}
-        />
-      )}
-    </div>
-  );
+const safeNum = (val: any, fallback = 0): number => {
+  const n = Number(val);
+  return isNaN(n) ? fallback : n;
 };
 
-// Componente Sparkline Animado
-const Sparkline = ({ positive, animated = true }: { positive: boolean; animated?: boolean }) => {
-  const [isVisible, setIsVisible] = useState(!animated);
-  
-  useEffect(() => {
-    if (animated) {
-      const timer = setTimeout(() => setIsVisible(true), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [animated]);
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://franciscoanalistadeportivo.pythonanywhere.com';
 
-  // Generar puntos para el sparkline
-  const generatePath = () => {
-    const points = [];
-    let y = 50;
-    for (let i = 0; i <= 10; i++) {
-      const change = positive 
-        ? (Math.random() * 20 - 8) 
-        : (Math.random() * 20 - 12);
-      y = Math.max(10, Math.min(90, y + change));
-      points.push({ x: i * 10, y: 100 - y });
-    }
-    return points;
-  };
-
-  const [points] = useState(generatePath());
-  const pathD = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`;
-  const color = positive ? '#00D1B2' : '#EF4444';
-
-  return (
-    <svg width="100" height="40" className="overflow-visible">
-      <defs>
-        <linearGradient id={`sparkline-gradient-${positive ? 'up' : 'down'}`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      {/* Área bajo la línea */}
-      <path
-        d={`${pathD} L 100,100 L 0,100 Z`}
-        fill={`url(#sparkline-gradient-${positive ? 'up' : 'down'})`}
-        className={`transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-      />
-      {/* Línea principal */}
-      <path
-        d={pathD}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#glow)"
-        className={`transition-all duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-        style={{
-          strokeDasharray: isVisible ? 'none' : '200',
-          strokeDashoffset: isVisible ? '0' : '200',
-        }}
-      />
-    </svg>
-  );
+const DEPORTE_ICONS: Record<string, string> = {
+  'Futbol': '⚽', 'Tenis': '🎾', 'NBA': '🏀', 'Baloncesto': '🏀',
+  'Voleibol': '🏐', 'Mixto': '🎯', 'eSports': '🎮', 'Hockey': '🏒',
+  'Beisbol': '⚾', 'Multideporte': '🎯',
 };
 
-// Componente Card del Tipster
-const TipsterCard = ({ tipster, rank }: { tipster: Tipster; rank: number }) => {
-  const yieldValue = tipster.yield || 0;
-  const isRentable = yieldValue > 0;
-  const isHot = (tipster.racha_actual || 0) >= 3 && tipster.tipo_racha === 'W';
+// Normaliza nombres inconsistentes de la DB
+const normalizeDeporte = (d: string): string => {
+  const raw = (d || '').trim();
+  const lower = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (lower.includes('futbol') || lower.includes('football') || lower.includes('soccer')) return 'Futbol';
+  if (lower.includes('tenis') || lower.includes('tennis')) return 'Tenis';
+  if (lower.includes('basket') || lower.includes('nba') || lower.includes('baloncesto')) return 'NBA';
+  if (lower.includes('voleibol') || lower.includes('volleyball') || lower.includes('voley')) return 'Voleibol';
+  if (lower.includes('esport') || lower.includes('gaming')) return 'eSports';
+  if (lower.includes('hockey')) return 'Hockey';
+  if (lower.includes('beisbol') || lower.includes('baseball') || lower.includes('mlb')) return 'Beisbol';
+  if (lower.includes('multi')) return 'Mixto';
+  if (lower === 'mixto') return 'Mixto';
+  return raw;
+};
 
-  const getRankDisplay = () => {
-    if (rank === 1) return <span className="text-2xl">🥇</span>;
-    if (rank === 2) return <span className="text-2xl">🥈</span>;
-    if (rank === 3) return <span className="text-2xl">🥉</span>;
-    return <span className="text-lg text-[#64748B] font-mono">#{rank}</span>;
-  };
+const getDeporteIcon = (d: string) => DEPORTE_ICONS[d] || DEPORTE_ICONS[normalizeDeporte(d)] || '🎯';
+
+// ═══════════════════════════════════════════════════
+// COMPACT TIPSTER ROW
+// ═══════════════════════════════════════════════════
+const TipsterRow = ({ tipster, rank }: { tipster: Tipster; rank: number }) => {
+  const yieldVal = safeNum(tipster.yield);
+  const isRentable = yieldVal > 0;
+  const racha = safeNum(tipster.racha_actual);
+  const isHotW = racha >= 3 && tipster.tipo_racha === 'W';
+  const isColdL = racha >= 3 && tipster.tipo_racha === 'L';
+  const wr = safeNum(tipster.porcentaje_acierto);
+
+  // Yield bar width (max 40% yield = 100% bar)
+  const yieldBarPct = Math.min(Math.abs(yieldVal) / 40 * 100, 100);
 
   return (
-    <Link
-      href={`/dashboard/tipsters/${tipster.id}`}
-      className="group relative block"
-    >
-      {/* Card con Glassmorphism */}
-      <div 
-        className="relative overflow-hidden rounded-2xl p-6 transition-all duration-300 
-                   hover:translate-y-[-4px] hover:shadow-2xl
-                   border border-white/10 hover:border-[#00D1B2]/30"
-        style={{
-          background: 'rgba(30, 41, 59, 0.7)',
-          backdropFilter: 'blur(12px)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        }}
-      >
-        {/* Efecto de brillo en hover */}
-        <div 
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{
-            background: 'linear-gradient(135deg, rgba(0, 209, 178, 0.1) 0%, transparent 50%, rgba(255, 221, 87, 0.1) 100%)',
-          }}
-        />
+    <Link href={`/dashboard/tipsters/${tipster.id}`} className="block group">
+      <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-[#00D1B2]/30 transition-all hover:bg-white/[0.02]"
+        style={{ background: 'rgba(30,41,59,0.5)' }}>
 
-        {/* Header */}
-        <div className="relative flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            {getRankDisplay()}
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{getDeporteIcon(tipster.deporte)}</span>
-                <h3 className="font-bold text-white text-lg group-hover:text-[#00D1B2] transition-colors">
-                  {tipster.alias}
-                </h3>
-              </div>
-              <p className="text-sm text-[#64748B]">{tipster.deporte}</p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-end gap-1">
+        {/* Rank */}
+        <div className="w-7 text-center shrink-0">
+          {rank <= 3 ? (
+            <span className="text-lg">{rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}</span>
+          ) : (
+            <span className="text-xs text-[#64748B] font-mono">#{rank}</span>
+          )}
+        </div>
+
+        {/* Icon + Name + Deporte */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm">{getDeporteIcon(sanitize(tipster.deporte))}</span>
+            <span className="text-sm font-bold text-white truncate group-hover:text-[#00D1B2] transition-colors">
+              {sanitize(tipster.alias, 25)}
+            </span>
+            {/* Badges */}
             {isRentable && (
-              <span 
-                className="px-3 py-1 rounded-full text-xs font-bold bg-[#00D1B2]/20 text-[#00D1B2] border border-[#00D1B2]/30"
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#00D1B2]/15 text-[#00D1B2] shrink-0">
+                Rent
+              </span>
+            )}
+            {isHotW && (
+              <span className="flex items-center gap-0.5 text-[9px] font-bold text-[#FFDD57] shrink-0">
+                <Flame className="h-3 w-3" />W{racha}
+              </span>
+            )}
+            {isColdL && (
+              <span className="flex items-center gap-0.5 text-[9px] font-bold text-[#EF4444] shrink-0">
+                <Snowflake className="h-3 w-3" />L{racha}
+              </span>
+            )}
+          </div>
+          {/* Stats line */}
+          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-[#64748B]">
+            <span>{sanitize(tipster.deporte)}</span>
+            <span>•</span>
+            <span className={wr >= 60 ? 'text-[#00D1B2]' : wr >= 50 ? 'text-[#FFDD57]' : 'text-[#EF4444]'}>
+              {wr.toFixed(1)}% WR
+            </span>
+            <span>•</span>
+            <span className="text-white">{safeNum(tipster.ganadas)}W {safeNum(tipster.perdidas)}L</span>
+            <span>•</span>
+            <span>{safeNum(tipster.total_apuestas)} ap</span>
+          </div>
+        </div>
+
+        {/* Yield + Arrow */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="text-right">
+            <div className={`flex items-center gap-0.5 text-sm font-bold font-mono ${isRentable ? 'text-[#00D1B2]' : 'text-[#EF4444]'}`}>
+              {isRentable ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              {yieldVal >= 0 ? '+' : ''}{yieldVal.toFixed(1)}%
+            </div>
+            {/* Mini yield bar */}
+            <div className="w-16 h-1 rounded-full bg-[#1E293B] mt-0.5">
+              <div className="h-full rounded-full transition-all duration-500"
                 style={{
-                  boxShadow: '0 0 12px rgba(0, 209, 178, 0.3)',
-                  animation: 'pulse 2s infinite'
-                }}
-              >
-                Rentable
-              </span>
-            )}
-            {isHot && (
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-[#FFDD57]/20 text-[#FFDD57] border border-[#FFDD57]/30">
-                <Flame className="h-3 w-3" />
-                W{tipster.racha_actual}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Contenido principal */}
-        <div className="relative flex items-center gap-6">
-          {/* Círculo de progreso */}
-          <CircularProgress 
-            percentage={tipster.porcentaje_acierto} 
-            size={110}
-            strokeWidth={8}
-            isHot={isHot}
-          />
-
-          {/* Métricas */}
-          <div className="flex-1 space-y-3">
-            {/* Yield */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#94A3B8]">Yield</span>
-              <span className={`text-xl font-bold font-mono flex items-center gap-1 ${
-                isRentable ? 'text-[#00D1B2]' : 'text-[#EF4444]'
-              }`}>
-                {isRentable ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                {yieldValue >= 0 ? '+' : ''}{yieldValue.toFixed(1)}%
-              </span>
-            </div>
-
-            {/* W/L */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#94A3B8]">W/L</span>
-              <span className="text-lg font-bold text-white font-mono">
-                <span className="text-[#00D1B2]">{tipster.ganadas}</span>
-                <span className="text-[#64748B]">/</span>
-                <span className="text-[#EF4444]">{tipster.perdidas}</span>
-              </span>
-            </div>
-
-            {/* Apuestas */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#94A3B8]">Apuestas</span>
-              <span className="text-lg font-bold font-mono text-white">
-                {tipster.total_apuestas}
-              </span>
+                  width: `${yieldBarPct}%`,
+                  background: isRentable ? '#00D1B2' : '#EF4444',
+                }} />
             </div>
           </div>
-        </div>
-
-        {/* Sparkline */}
-        <div className="relative mt-4 flex items-center justify-between">
-          <Sparkline positive={isRentable} />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#64748B]">📊</span>
-            <span className="text-sm font-medium text-[#94A3B8]">RACHAS</span>
-          </div>
+          <ChevronRight className="h-4 w-4 text-[#334155] group-hover:text-[#00D1B2] transition-colors" />
         </div>
       </div>
     </Link>
   );
 };
 
+// ═══════════════════════════════════════════════════
+// TOP 3 PODIUM (compact)
+// ═══════════════════════════════════════════════════
+const TopPodium = ({ tipsters }: { tipsters: Tipster[] }) => {
+  if (tipsters.length < 3) return null;
+  const top3 = tipsters.slice(0, 3);
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {top3.map((t, i) => {
+        const y = safeNum(t.yield);
+        const wr = safeNum(t.porcentaje_acierto);
+        return (
+          <Link key={t.id} href={`/dashboard/tipsters/${t.id}`}
+            className="rounded-xl p-3 border border-white/10 hover:border-[#00D1B2]/30 transition-all text-center"
+            style={{ background: 'rgba(30,41,59,0.7)' }}>
+            <span className="text-xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
+            <p className="text-xs font-bold text-white mt-1 truncate">{sanitize(t.alias, 15)}</p>
+            <p className="text-[10px] text-[#64748B]">{getDeporteIcon(sanitize(t.deporte))} {sanitize(t.deporte)}</p>
+            <p className={`text-sm font-bold font-mono mt-1 ${y >= 0 ? 'text-[#00D1B2]' : 'text-[#EF4444]'}`}>
+              {y >= 0 ? '+' : ''}{y.toFixed(1)}%
+            </p>
+            <p className="text-[10px] text-[#64748B]">
+              {wr.toFixed(0)}% WR • {safeNum(t.total_apuestas)} ap
+            </p>
+          </Link>
+        );
+      })}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════
+// MAIN PAGE
+// ═══════════════════════════════════════════════════
 export default function TipstersPage() {
   const [tipsters, setTipsters] = useState<Tipster[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'yield' | 'winrate' | 'apuestas'>('yield');
+  const [deporteFilter, setDeporteFilter] = useState<string>('all');
 
   useEffect(() => {
     const fetchTipsters = async () => {
       try {
-        const response = await tipstersAPI.getAll();
-        // Manejar diferentes formatos de respuesta del backend
+        // Try enhanced endpoint first (includes racha)
         let tipstersList: Tipster[] = [];
-        
-        if (Array.isArray(response)) {
-          tipstersList = response;
-        } else if (response?.tipsters && Array.isArray(response.tipsters)) {
-          tipstersList = response.tipsters;
-        } else if (response?.data && Array.isArray(response.data)) {
-          tipstersList = response.data;
-        } else if (typeof response === 'object' && response !== null) {
-          const values = Object.values(response);
-          if (values.length > 0 && Array.isArray(values[0])) {
-            tipstersList = values[0] as Tipster[];
+        try {
+          const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+          if (token) {
+            const res = await fetch(`${API_URL}/api/tipsters-enhanced`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (res.ok) {
+              const d = await res.json();
+              if (d.tipsters && Array.isArray(d.tipsters)) {
+                tipstersList = d.tipsters;
+              }
+            }
+          }
+        } catch {
+          // Fallback to standard endpoint
+        }
+
+        // Fallback: use standard API
+        if (tipstersList.length === 0) {
+          const response = await tipstersAPI.getAll();
+          if (Array.isArray(response)) {
+            tipstersList = response;
+          } else if (response?.tipsters && Array.isArray(response.tipsters)) {
+            tipstersList = response.tipsters;
+          } else if (response?.data && Array.isArray(response.data)) {
+            tipstersList = response.data;
           }
         }
-        
-        // Validar y sanitizar datos del backend
-        const validatedTipsters = tipstersList
-          .filter((t): t is Tipster => 
-            t !== null && 
-            typeof t === 'object' && 
-            typeof t.id === 'number'
-          )
+
+        // Validate + sanitize
+        const validated = tipstersList
+          .filter((t): t is Tipster => t !== null && typeof t === 'object' && typeof t.id === 'number')
           .map(t => ({
-            id: Number(t.id) || 0,
-            alias: String(t.alias || 'Sin nombre').slice(0, 50),
-            deporte: String(t.deporte || 'Mixto').slice(0, 30),
-            total_apuestas: Math.max(0, Number(t.total_apuestas) || 0),
-            ganadas: Math.max(0, Number(t.ganadas) || 0),
-            perdidas: Math.max(0, Number(t.perdidas) || 0),
-            porcentaje_acierto: Math.min(100, Math.max(0, Number(t.porcentaje_acierto) || 0)),
-            ganancia_total: Number(t.ganancia_total) || 0,
-            yield: Number(t.yield) || 0,
-            racha_actual: Number(t.racha_actual) || 0,
-            tipo_racha: String(t.tipo_racha || '').slice(0, 1),
-            tipo_estrategia: String(t.tipo_estrategia || 'RACHAS').slice(0, 20),
+            id: safeNum(t.id),
+            alias: sanitize(t.alias, 50) || 'Sin nombre',
+            deporte: normalizeDeporte(sanitize(t.deporte, 30) || 'Mixto'),
+            total_apuestas: Math.max(0, safeNum(t.total_apuestas)),
+            ganadas: Math.max(0, safeNum(t.ganadas)),
+            perdidas: Math.max(0, safeNum(t.perdidas)),
+            porcentaje_acierto: Math.min(100, Math.max(0, safeNum(t.porcentaje_acierto))),
+            ganancia_total: safeNum(t.ganancia_total),
+            yield: safeNum(t.yield),
+            racha_actual: safeNum(t.racha_actual),
+            tipo_racha: sanitize(t.tipo_racha, 1),
           }));
-        
-        setTipsters(validatedTipsters);
+
+        setTipsters(validated);
       } catch (error) {
         console.error('Error fetching tipsters:', error);
         setTipsters([]);
@@ -379,135 +261,145 @@ export default function TipstersPage() {
     fetchTipsters();
   }, []);
 
-  // Sanitizar input para prevenir XSS
-  const sanitizeInput = (input: string): string => {
-    return input.replace(/[<>\"\'&]/g, '').slice(0, 100);
-  };
+  // Unique deportes sorted by count (most tipsters first)
+  const deportes = Array.from(new Set(tipsters.map(t => t.deporte)))
+    .map(d => ({ name: d, count: tipsters.filter(t => t.deporte === d).length }))
+    .sort((a, b) => b.count - a.count);
 
-  // Filtrar y ordenar
-  const filteredTipsters = tipsters
-    .filter(t => t.alias && t.alias.toLowerCase().includes(sanitizeInput(searchTerm).toLowerCase()))
+  // Filter + sort
+  const filtered = tipsters
+    .filter(t => {
+      if (deporteFilter !== 'all' && t.deporte !== deporteFilter) return false;
+      if (searchTerm) {
+        const term = searchTerm.replace(/[<>"'&]/g, '').toLowerCase();
+        return t.alias.toLowerCase().includes(term);
+      }
+      return true;
+    })
     .sort((a, b) => {
-      if (sortBy === 'yield') return (b.yield || 0) - (a.yield || 0);
-      if (sortBy === 'winrate') return (b.porcentaje_acierto || 0) - (a.porcentaje_acierto || 0);
-      return (b.total_apuestas || 0) - (a.total_apuestas || 0);
+      if (sortBy === 'yield') return safeNum(b.yield) - safeNum(a.yield);
+      if (sortBy === 'winrate') return safeNum(b.porcentaje_acierto) - safeNum(a.porcentaje_acierto);
+      return safeNum(b.total_apuestas) - safeNum(a.total_apuestas);
     });
 
-  // Calcular totales con validación
-  const totalGanadas = tipsters.reduce((acc, t) => acc + (Number(t.ganadas) || 0), 0);
-  const totalPerdidas = tipsters.reduce((acc, t) => acc + (Number(t.perdidas) || 0), 0);
-  const winRatePromedio = tipsters.length > 0 
-    ? (tipsters.reduce((acc, t) => acc + (Number(t.porcentaje_acierto) || 0), 0) / tipsters.length)
-    : 0;
-  const tipstersRentables = tipsters.filter(t => (t.yield || 0) > 0).length;
-  const porcentajeRentables = tipsters.length > 0 ? (tipstersRentables / tipsters.length * 100) : 0;
+  // Stats
+  const totalG = tipsters.reduce((a, t) => a + safeNum(t.ganadas), 0);
+  const totalP = tipsters.reduce((a, t) => a + safeNum(t.perdidas), 0);
+  const wrProm = tipsters.length > 0 ? tipsters.reduce((a, t) => a + safeNum(t.porcentaje_acierto), 0) / tipsters.length : 0;
+  const rentables = tipsters.filter(t => safeNum(t.yield) > 0).length;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-12 h-12 border-4 border-[#00D1B2]/30 border-t-[#00D1B2] rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-[#00D1B2]/30 border-t-[#00D1B2] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-20 lg:pb-6">
+    <div className="space-y-4 animate-fadeIn pb-20 lg:pb-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-          <Users className="h-8 w-8 text-[#00D1B2]" />
-          Tipsters
-        </h1>
-        <p className="text-[#94A3B8] mt-1">{tipsters.length} tipsters activos</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Users className="h-6 w-6 text-[#00D1B2]" /> Tipsters
+          </h1>
+          <p className="text-xs text-[#94A3B8]">{tipsters.length} activos</p>
+        </div>
       </div>
 
-      {/* Buscador y Filtros */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* KPIs compactos — 1 fila */}
+      <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {[
+          { label: 'Tipsters', value: String(tipsters.length), color: 'white' },
+          { label: 'W/L', value: `${totalG}/${totalP}`, color: '#00D1B2' },
+          { label: 'WR Prom', value: `${wrProm.toFixed(1)}%`, color: 'white' },
+          { label: 'Rentables', value: `${rentables}/${tipsters.length}`, color: '#00D1B2' },
+        ].map((kpi, i) => (
+          <div key={i} className="shrink-0 rounded-lg px-3 py-2 border border-white/10"
+            style={{ background: 'rgba(30,41,59,0.7)' }}>
+            <p className="text-base font-bold font-mono" style={{ color: kpi.color }}>{kpi.value}</p>
+            <p className="text-[10px] text-[#64748B]">{kpi.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Search + Sort */}
+      <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#64748B]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748B]" />
           <input
             type="text"
             placeholder="Buscar tipster..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-xl py-3 pl-12 pr-4 text-white placeholder-[#64748B] 
-                       focus:outline-none focus:ring-2 focus:ring-[#00D1B2]/50 transition-all"
-            style={{
-              background: 'rgba(30, 41, 59, 0.7)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
+            maxLength={50}
+            className="w-full rounded-lg py-2 pl-9 pr-3 text-sm text-white placeholder-[#64748B] focus:outline-none focus:ring-1 focus:ring-[#00D1B2]/50 transition-all"
+            style={{ background: 'rgba(30,41,59,0.7)', border: '1px solid rgba(255,255,255,0.1)' }}
           />
         </div>
-        <div className="flex gap-2">
-          {[
+        <div className="flex gap-1">
+          {([
             { key: 'yield', label: 'Yield' },
-            { key: 'winrate', label: 'Win Rate' },
-            { key: 'apuestas', label: 'Volumen' },
-          ].map((filter) => (
-            <button
-              key={filter.key}
-              onClick={() => setSortBy(filter.key as any)}
-              className={`px-5 py-3 rounded-xl text-sm font-medium transition-all ${
-                sortBy === filter.key
-                  ? 'bg-[#00D1B2] text-white shadow-lg shadow-[#00D1B2]/25'
-                  : 'text-[#94A3B8] hover:text-white'
-              }`}
-              style={sortBy !== filter.key ? {
-                background: 'rgba(30, 41, 59, 0.7)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-              } : {}}
-            >
-              {filter.label}
+            { key: 'winrate', label: 'WR' },
+            { key: 'apuestas', label: 'Vol' },
+          ] as const).map(f => (
+            <button key={f.key} onClick={() => setSortBy(f.key)}
+              className="px-3 py-2 rounded-lg text-xs font-bold transition-all"
+              style={{
+                background: sortBy === f.key ? '#00D1B2' : 'rgba(30,41,59,0.7)',
+                color: sortBy === f.key ? '#0F172A' : '#94A3B8',
+                border: sortBy === f.key ? 'none' : '1px solid rgba(255,255,255,0.1)',
+              }}>
+              {f.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Stats Overview con Glassmorphism */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Tipsters', value: tipsters.length, color: 'white' },
-          { label: 'Ganadas/Perdidas', value: `${totalGanadas}/${totalPerdidas}`, color: '#00D1B2' },
-          { label: 'Win Rate Prom', value: `${winRatePromedio.toFixed(1)}%`, color: 'white' },
-          { label: 'Rentables', value: `${porcentajeRentables.toFixed(0)}% (${tipstersRentables}/${tipsters.length})`, color: '#00D1B2' },
-        ].map((stat, i) => (
-          <div 
-            key={i}
-            className="rounded-2xl p-5 border border-white/10"
+      {/* Deporte filter — scrollable chips */}
+      {deportes.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <button onClick={() => setDeporteFilter('all')}
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
             style={{
-              background: 'rgba(30, 41, 59, 0.7)',
-              backdropFilter: 'blur(12px)',
-            }}
-          >
-            <p 
-              className="text-2xl font-bold font-mono"
-              style={{ color: stat.color }}
-            >
-              {stat.value}
-            </p>
-            <p className="text-sm text-[#64748B]">{stat.label}</p>
-          </div>
-        ))}
-      </div>
+              background: deporteFilter === 'all' ? '#00D1FF' : 'rgba(30,41,59,0.7)',
+              color: deporteFilter === 'all' ? '#0F172A' : '#94A3B8',
+              border: deporteFilter === 'all' ? 'none' : '1px solid rgba(255,255,255,0.1)',
+            }}>
+            Todos ({tipsters.length})
+          </button>
+          {deportes.map(d => (
+            <button key={d.name} onClick={() => setDeporteFilter(d.name)}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+              style={{
+                background: deporteFilter === d.name ? '#00D1FF' : 'rgba(30,41,59,0.7)',
+                color: deporteFilter === d.name ? '#0F172A' : '#94A3B8',
+                border: deporteFilter === d.name ? 'none' : '1px solid rgba(255,255,255,0.1)',
+              }}>
+              {getDeporteIcon(d.name)} {d.name} ({d.count})
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Grid de Tipsters */}
-      {filteredTipsters.length === 0 ? (
-        <div 
-          className="rounded-2xl p-16 text-center border border-white/10"
-          style={{
-            background: 'rgba(30, 41, 59, 0.7)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <Users className="h-12 w-12 text-[#334155] mx-auto mb-4" />
-          <p className="text-[#94A3B8]">No se encontraron tipsters</p>
+      {/* Top 3 Podium */}
+      {deporteFilter === 'all' && !searchTerm && <TopPodium tipsters={filtered} />}
+
+      {/* Lista de tipsters (compact rows) */}
+      {filtered.length === 0 ? (
+        <div className="rounded-xl p-12 text-center border border-white/10" style={{ background: 'rgba(30,41,59,0.7)' }}>
+          <Users className="h-10 w-10 text-[#334155] mx-auto mb-3" />
+          <p className="text-[#94A3B8] text-sm">No se encontraron tipsters</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredTipsters.map((tipster, index) => (
-            <TipsterCard key={tipster.id} tipster={tipster} rank={index + 1} />
+        <div className="space-y-1.5">
+          {filtered.map((tipster, index) => (
+            <TipsterRow
+              key={tipster.id}
+              tipster={tipster}
+              rank={index + 1}
+            />
           ))}
         </div>
       )}

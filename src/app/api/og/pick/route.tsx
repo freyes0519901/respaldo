@@ -3,190 +3,207 @@ import { NextRequest } from 'next/server';
 
 export const runtime = 'edge';
 
-// ══════════════════════════════════════════════════════════════
-// NEUROTIPS OG — PICK (VIP / FREE)
-// Diseño: Fintech Trust · Colores: Neuromarketing Science
-// Branding: NEUR🧠TIPS (cyan + green matching logo)
-// Tamaño: 1200 × 600-760px (HD para Telegram/WhatsApp)
-// ══════════════════════════════════════════════════════════════
-
-const CYAN = '#22D3EE';
-const NGREEN = '#4ADE80';
-const GOLD = '#EAB308';
-const GREEN = '#22C55E';
-const BLUE = '#3B82F6';
-const NAVY = '#0F172A';
-const CARD = '#1E293B';
-const MUTED = '#64748B';
-const TEXT = '#F8FAFC';
-
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   if (p.get('token') !== (process.env.OG_SECRET || 'NT_OG_2026')) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const tipo = p.get('tipo') || 'vip';
+  const tipo = p.get('tipo') || 'free';
   const tipster = p.get('tipster') || 'Tipster';
-  const apuesta = p.get('apuesta') || 'Apuesta';
+  const apuesta = p.get('apuesta') || '';
   const cuota = p.get('cuota') || '1.50';
   const mercado = p.get('mercado') || '';
   const hora = p.get('hora') || '';
   const efectividad = p.get('efectividad') || '';
   const rendimiento = p.get('rendimiento') || '';
   const racha = p.get('racha') || '';
-  const ev = p.get('ev') || '';
-  const prob = p.get('prob') || '';
   const zona = p.get('zona') || '';
-  const certificado = p.get('cert') === '1';
-  const stake = p.get('stake') || '';
-  const deporte = p.get('deporte') || 'Fútbol';
+  const cert = p.get('cert') === '1';
+  const deporte = p.get('deporte') || '';
+  const neuroscore = p.get('neuroscore') || '';
+  const platform = p.get('platform') || 'telegram';
 
   const isVip = tipo === 'vip';
-  const deporteEmoji = deporte.toLowerCase().includes('tenis') ? '🎾' :
-    (deporte.toLowerCase().includes('basket') || deporte.toLowerCase().includes('nba')) ? '🏀' : '⚽';
+  const isTG = platform === 'telegram';
+  const W = isTG ? 1080 : 1600;
+  const H = isTG ? 600 : 900;
 
-  // Detect combinada & parse legs
-  const esCombinada = apuesta.toUpperCase().startsWith('COMBINADA');
-  let legs: { partido: string; pick: string }[] = [];
-  if (esCombinada) {
-    const sinPrefix = apuesta.replace(/^COMBINADA[^:]*:\s*/i, '');
-    legs = sinPrefix.split(/\s*\+\s*/).map(parte => {
-      const idx = parte.lastIndexOf(':');
-      if (idx > 0) return { partido: parte.substring(0, idx).trim(), pick: parte.substring(idx + 1).trim() };
-      return { partido: parte.trim(), pick: '' };
-    });
-  }
+  const accent = isVip ? '#B45309' : '#2563EB';
+  const accentDark = isVip ? '#92400E' : '#1E3A5F';
+  const accentMid = isVip ? '#D97706' : '#3B82F6';
+  const accentLight = isVip ? '#FEF3C7' : '#DBEAFE';
+  const headerGrad = isVip
+    ? `linear-gradient(135deg, #92400E, #B45309)`
+    : `linear-gradient(135deg, #1E3A5F, #2563EB)`;
 
-  const height = esCombinada ? Math.min(560 + legs.length * 80, 840) : 600;
+  const zonaColor = zona === 'ORO' ? '#B45309' : zona === 'PLATA' ? '#64748B' : '#2563EB';
+  const zonaBg = zona === 'ORO' ? '#FEF3C7' : zona === 'PLATA' ? '#F1F5F9' : '#DBEAFE';
+
+  const seed = parseInt(p.get('seed') || String(Date.now() % 100));
+  const frases = ['6 filtros de IA aplicados','Analizado por IA. Verificado por datos.','No es corazonada, son datos.','Probabilidad vs cuota: ventaja.'];
+  const frase = frases[seed % frases.length];
 
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: NAVY }}>
-        {/* Accent bar — gradient matching logo */}
-        <div style={{ display: 'flex', width: '100%', height: '5px', background: `linear-gradient(90deg, ${CYAN}, ${NGREEN})` }} />
+      <div style={{
+        width: `${W}px`, height: `${H}px`, display: 'flex', flexDirection: 'column',
+        backgroundColor: 'white', fontFamily: 'system-ui, sans-serif',
+      }}>
 
-        {/* Header: NEUR🧠TIPS | VIP + cert badge */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px 8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: 34, fontWeight: 800, color: CYAN, letterSpacing: '-0.5px' }}>NEUR</span>
-            <span style={{ fontSize: 28 }}>🧠</span>
-            <span style={{ fontSize: 34, fontWeight: 800, color: NGREEN, letterSpacing: '-0.5px' }}>TIPS</span>
-            <div style={{ display: 'flex', width: '2px', height: 28, background: '#334155', margin: '0 12px' }} />
-            <span style={{ fontSize: 16, color: isVip ? GOLD : '#94A3B8', letterSpacing: '3px', fontWeight: 700 }}>
-              {isVip ? 'ANÁLISIS VIP' : 'ANÁLISIS FREE'}
+        {/* HEADER 56px */}
+        <div style={{
+          display: 'flex', width: '100%', height: '56px',
+          background: headerGrad,
+          alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 28px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: 'white' }}>NEUR</span>
+            <span style={{ fontSize: 16, margin: '0 3px' }}>🧠</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: 'white' }}>TIPS</span>
+          </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {cert && (
+              <div style={{ display: 'flex', padding: '4px 12px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.95)' }}>
+                <span style={{ fontSize: 11, fontWeight: 900, color: '#16A34A' }}>CERT. IA</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', padding: '4px 14px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.95)' }}>
+              <span style={{ fontSize: 12, fontWeight: 900, color: accent }}>{isVip ? 'VIP' : 'FREE'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* BODY */}
+        <div style={{
+          display: 'flex', flex: 1, flexDirection: 'row',
+          padding: '20px 28px 14px',
+          gap: '24px',
+        }}>
+
+          {/* LEFT */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', flex: 1,
+            justifyContent: 'space-between',
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span style={{ fontSize: 22, fontWeight: 800, color: '#111' }}>{tipster}</span>
+              </div>
+
+              {(deporte || mercado || hora) && (
+                <span style={{ fontSize: 12, color: '#64748B', marginBottom: '8px' }}>
+                  {deporte || mercado}{hora ? ` · ${hora}` : ''}
+                </span>
+              )}
+
+              <div style={{
+                display: 'flex', padding: '10px 14px',
+                borderRadius: '8px', backgroundColor: '#F8FAFC',
+                borderLeft: `3px solid ${accent}`,
+                marginBottom: '10px',
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35, color: '#1E293B' }}>
+                  {apuesta.length > 75 ? apuesta.substring(0, 72) + '...' : apuesta}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {efectividad && (
+                  <div style={{ display: 'flex', padding: '3px 10px', borderRadius: '12px', backgroundColor: '#DCFCE7' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D' }}>WR {efectividad}%</span>
+                  </div>
+                )}
+                {rendimiento && (
+                  <div style={{ display: 'flex', padding: '3px 10px', borderRadius: '12px', backgroundColor: '#DBEAFE' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#1D4ED8' }}>ROI {rendimiento}</span>
+                  </div>
+                )}
+                {racha && parseInt(racha) > 0 && (
+                  <div style={{ display: 'flex', padding: '3px 10px', borderRadius: '12px', backgroundColor: '#FEF3C7' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E' }}>{racha} seguidas</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <span style={{ fontSize: 12, fontWeight: 500, fontStyle: 'italic', color: '#94A3B8' }}>
+              {frase}
             </span>
           </div>
+
+          {/* RIGHT — cuota + zona */}
           <div style={{
-            display: 'flex', padding: '4px 20px', borderRadius: 10,
-            background: certificado ? 'rgba(34,197,94,0.08)' : 'rgba(51,65,85,0.15)',
-            border: `1px solid ${certificado ? 'rgba(34,197,94,0.25)' : 'rgba(51,65,85,0.3)'}`,
-            fontSize: 16, fontWeight: 700, color: certificado ? GREEN : MUTED,
+            display: 'flex', flexDirection: 'column',
+            justifyContent: 'center', alignItems: 'flex-end',
+            gap: '8px', minWidth: '160px',
           }}>
-            {certificado ? '✓ Certificado IA' : '○ Analizado'}
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              padding: '14px 24px', borderRadius: '10px',
+              backgroundColor: accentLight, border: `2px solid ${accent}20`,
+              width: '100%',
+            }}>
+              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#94A3B8' }}>CUOTA</span>
+              <span style={{
+                fontSize: 42, fontWeight: 900, color: accent,
+                letterSpacing: '-2px', lineHeight: 1,
+              }}>{cuota}</span>
+            </div>
+
+            {zona && (
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                padding: '10px 20px', borderRadius: '10px',
+                backgroundColor: zonaBg, border: `2px solid ${zonaColor}20`,
+                width: '100%',
+              }}>
+                <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.5px', color: '#94A3B8' }}>ZONA</span>
+                <span style={{ fontSize: 22, fontWeight: 900, color: zonaColor }}>
+                  {zona === 'ORO' ? 'ORO' : zona}
+                </span>
+              </div>
+            )}
+
+            {neuroscore && (
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                padding: '6px 16px', borderRadius: '8px',
+                backgroundColor: '#DCFCE7', width: '100%',
+              }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: '#94A3B8' }}>NS</span>
+                <span style={{ fontSize: 20, fontWeight: 900, color: '#15803D' }}>{neuroscore}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Main card */}
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, margin: '8px 28px 12px', padding: '20px 28px', borderRadius: 16, background: CARD }}>
-          {/* Tipster + deporte */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontSize: 24, fontWeight: 700, color: GOLD }}>{tipster}</span>
-            <span style={{ fontSize: 18, color: MUTED }}>{deporteEmoji} {esCombinada ? 'COMBINADA' : (mercado || deporte.toUpperCase())}</span>
-          </div>
-
-          {/* Combinada legs OR simple */}
-          {esCombinada && legs.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', background: NAVY, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
-              {legs.map((leg, i) => (
-                <div key={i} style={{
-                  display: 'flex', alignItems: 'center', padding: '14px 20px',
-                  borderBottom: i < legs.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
-                }}>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: 32, height: 32, borderRadius: 6,
-                    background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)',
-                    fontSize: 16, color: GOLD, fontWeight: 800, marginRight: 16, flexShrink: 0,
-                  }}>{i + 1}</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <span style={{ fontSize: 20, fontWeight: 600, color: '#E2E8F0' }}>
-                      {leg.partido.length > 50 ? leg.partido.substring(0, 50) + '…' : leg.partido}
-                    </span>
-                    {leg.pick && <span style={{ fontSize: 18, color: GREEN, fontWeight: 500 }}>
-                      {leg.pick.length > 45 ? leg.pick.substring(0, 45) + '…' : leg.pick}
-                    </span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', fontSize: 26, fontWeight: 600, lineHeight: 1.3, color: '#CBD5E1', marginBottom: 16 }}>
-              {apuesta.length > 85 ? apuesta.substring(0, 85) + '…' : apuesta}
-            </div>
-          )}
-
-          {/* Stats: Cuota | Mercado | Hora | Stake */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '14px 20px', background: NAVY, borderRadius: '12px 0 0 12px' }}>
-              <span style={{ fontSize: 14, color: MUTED, letterSpacing: '1.5px' }}>{esCombinada ? 'CUOTA TOTAL' : 'CUOTA'}</span>
-              <span style={{ fontSize: 42, fontWeight: 800, color: GOLD }}>{cuota}</span>
-            </div>
-            {hora ? <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '14px 20px', background: NAVY }}>
-              <span style={{ fontSize: 14, color: MUTED, letterSpacing: '1.5px' }}>HORA CL</span>
-              <span style={{ fontSize: 30, fontWeight: 700, color: TEXT }}>{hora}</span>
-            </div> : null}
-            {mercado && !esCombinada ? <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '14px 20px', background: NAVY }}>
-              <span style={{ fontSize: 14, color: MUTED, letterSpacing: '1.5px' }}>MERCADO</span>
-              <span style={{ fontSize: 22, fontWeight: 600, color: '#E2E8F0' }}>{mercado.length > 18 ? mercado.substring(0, 18) + '…' : mercado}</span>
-            </div> : null}
-            {stake ? <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '14px 20px', background: NAVY, borderRadius: '0 12px 12px 0' }}>
-              <span style={{ fontSize: 14, color: MUTED, letterSpacing: '1.5px' }}>STAKE</span>
-              <span style={{ fontSize: 30, fontWeight: 700, color: TEXT }}>{stake}</span>
-            </div> : null}
-          </div>
-
-          {/* Metrics */}
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-            {efectividad && <Dot color={GREEN} label={`${efectividad}%`} icon="📊" />}
-            {rendimiento && <Dot color={BLUE} label={rendimiento} icon="📈" />}
-            {racha && <Dot color={GOLD} label={`Racha ${racha}`} icon="🔥" />}
-            {prob && <>
-              <Dot color="#A78BFA" label={`IA ${prob}%`} icon="🧠" />
-              {ev && <span style={{ fontSize: 18, fontWeight: 700, color: parseFloat(ev) >= 0 ? GREEN : '#EF4444' }}>EV {ev}%</span>}
-            </>}
-            {zona && <span style={{
-              fontSize: 16, fontWeight: 600, padding: '3px 12px', borderRadius: 6,
-              background: zona.toUpperCase() === 'ORO' ? 'rgba(234,179,8,0.08)' : 'rgba(148,163,184,0.06)',
-              color: zona.toUpperCase() === 'ORO' ? GOLD : MUTED,
-              border: `1px solid ${zona.toUpperCase() === 'ORO' ? 'rgba(234,179,8,0.2)' : 'rgba(148,163,184,0.12)'}`,
-            }}>Zona {zona}</span>}
+        {/* FOOTER 38px */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '0 28px', height: '38px',
+          backgroundColor: '#F8FAFC', borderTop: '1px solid #F1F5F9',
+        }}>
+          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>
+            +1000 analisis verificados · neurotips.io
+          </span>
+          <div style={{
+            display: 'flex', padding: '4px 12px', borderRadius: '12px',
+            backgroundColor: accent,
+          }}>
+            <span style={{ fontSize: 10, fontWeight: 900, color: 'white' }}>
+              {isVip ? 'Solo VIP' : '5 dias gratis'}
+            </span>
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 40px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ fontSize: 18, fontWeight: 600, color: '#475569' }}>neuro</span>
-            <span style={{ fontSize: 14 }}>🧠</span>
-            <span style={{ fontSize: 18, fontWeight: 700, color: MUTED }}>tips</span>
-            <span style={{ fontSize: 18, color: '#475569' }}>.io</span>
-          </div>
-          <span style={{ fontSize: 16, color: '#475569' }}>Verificado por IA</span>
-        </div>
+        <div style={{
+          display: 'flex', width: '100%', height: '4px',
+          background: `linear-gradient(90deg, ${accentDark}, ${accent}, ${accentMid})`,
+        }} />
       </div>
     ),
-    { width: 1200, height },
-  );
-}
-
-// Helper component
-function Dot({ color, label, icon }: { color: string; label: string; icon?: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      {icon ? <span style={{ fontSize: 14 }}>{icon}</span> : 
-        <div style={{ display: 'flex', width: 8, height: 8, borderRadius: '50%', background: color }} />}
-      <span style={{ fontSize: 18, color: '#94A3B8', fontWeight: 500 }}>{label}</span>
-    </div>
+    { width: W, height: H }
   );
 }

@@ -16,6 +16,7 @@ interface Apuesta {
   resultado: string;
   fecha: string;
   tipo_mercado: string;
+  deporte: string;
   ganancia_neta: number;
   racha_actual: number;
   hora_partido: string;
@@ -36,6 +37,10 @@ const TIPOS_MERCADO = [
 ];
 
 const RESULTADOS = ['PENDIENTE', 'GANADA', 'PERDIDA', 'NULA'];
+
+const DEPORTES = [
+  'Fútbol', 'Básquetbol', 'Tenis', 'Voleibol', 'Hockey', 'Béisbol', 'MMA', 'Handball', 'Esports'
+];
 
 const escapeCSV = (value: any): string => {
   if (value === null || value === undefined) return '';
@@ -253,7 +258,7 @@ export default function ApuestasAdminPage() {
     if (allApuestas.length === 0) return;
     setIsExporting(true);
     try {
-      const headers = { ID: 'ID', Fecha: 'Fecha', Tipster: 'Tipster', Apuesta: 'Apuesta', Cuota: 'Cuota', Stake: 'Stake', Tipo: 'Tipo', Resultado: 'Resultado', Ganancia: 'Ganancia', Racha: 'Racha' };
+      const headers = { ID: 'ID', Fecha: 'Fecha', Tipster: 'Tipster', Apuesta: 'Apuesta', Cuota: 'Cuota', Stake: 'Stake', Tipo: 'Tipo', Deporte: 'Deporte', Resultado: 'Resultado', Ganancia: 'Ganancia', Racha: 'Racha' };
       const data = [headers, ...allApuestas.map(a => ({
         ID: a.id,
         Fecha: a.fecha ? new Date(a.fecha).toLocaleDateString('es-CL') : '',
@@ -262,6 +267,7 @@ export default function ApuestasAdminPage() {
         Cuota: a.cuota || 0,
         Stake: a.stake_ia || 0,
         Tipo: a.tipo_mercado || '',
+        Deporte: a.deporte || '',
         Resultado: a.resultado || 'PENDIENTE',
         Ganancia: a.ganancia_neta || 0,
         Racha: a.racha_actual || 0
@@ -303,7 +309,7 @@ export default function ApuestasAdminPage() {
   const exportPendientes = () => {
     const pendientes = allApuestas.filter(a => a.resultado === 'PENDIENTE');
     if (pendientes.length === 0) { alert('No hay pendientes'); return; }
-    const headers = { ID: 'ID', Fecha: 'Fecha', Tipster: 'Tipster', Apuesta: 'Apuesta', Cuota: 'Cuota', Stake: 'Stake', Tipo: 'Tipo' };
+    const headers = { ID: 'ID', Fecha: 'Fecha', Tipster: 'Tipster', Apuesta: 'Apuesta', Cuota: 'Cuota', Stake: 'Stake', Tipo: 'Tipo', Deporte: 'Deporte' };
     const data = [headers, ...pendientes.map(a => ({
       ID: a.id,
       Fecha: a.fecha ? new Date(a.fecha).toLocaleDateString('es-CL') : '',
@@ -311,7 +317,8 @@ export default function ApuestasAdminPage() {
       Apuesta: a.apuesta || '',
       Cuota: a.cuota || 0,
       Stake: a.stake_ia || 0,
-      Tipo: a.tipo_mercado || ''
+      Tipo: a.tipo_mercado || '',
+      Deporte: a.deporte || ''
     }))];
     downloadCSV(data, `pendientes_${new Date().toISOString().split('T')[0]}.csv`);
   };
@@ -401,6 +408,7 @@ export default function ApuestasAdminPage() {
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400">Cuota</th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400">Stake</th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400">Tipo</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400">Deporte</th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400">Hora</th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400">Resultado</th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400">Racha</th>
@@ -457,6 +465,16 @@ export default function ApuestasAdminPage() {
                     className="px-2 py-1 bg-slate-800 border border-slate-600 rounded text-white text-xs cursor-pointer hover:bg-slate-700"
                   >
                     {TIPOS_MERCADO.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </td>
+                {/* DEPORTE - Siempre editable ★ V15 */}
+                <td className="px-3 py-2">
+                  <select 
+                    value={a.deporte || 'Fútbol'} 
+                    onChange={(e) => updateField(a.id, 'deporte', e.target.value)}
+                    className="px-2 py-1 bg-slate-800 border border-slate-600 rounded text-white text-xs cursor-pointer hover:bg-slate-700"
+                  >
+                    {DEPORTES.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </td>
                 {/* HORA PARTIDO - Siempre editable */}

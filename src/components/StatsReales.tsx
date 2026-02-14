@@ -206,7 +206,13 @@ export default function StatsReales({ variant = 'full' }: Props) {
       {/* ── Header ── */}
       <div className="flex items-center gap-2 mb-5">
         <Star className="h-5 w-5 text-[#FFDD57]" />
-        <h3 className="font-bold text-white">Rendimiento Global</h3>
+        <h3 className="font-bold text-white">Rendimiento del Mes</h3>
+        <span style={{
+          fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px',
+          background: 'rgba(255,221,87,0.1)', color: '#FFDD57', marginLeft: '4px',
+        }}>
+          {new Date().toLocaleString('es-CL', { month: 'long' }).toUpperCase()} {new Date().getFullYear()}
+        </span>
         <span style={{
           fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px',
           background: 'rgba(0,209,178,0.1)', color: '#00D1B2', marginLeft: 'auto',
@@ -216,54 +222,12 @@ export default function StatsReales({ variant = 'full' }: Props) {
         </span>
       </div>
 
-      {/* ── Stats Grid — 4 KPIs principales ── */}
+      {/* ── Stats Grid — 4 KPIs del MES ACTUAL ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Win Rate Global */}
+        {/* Win Rate del Mes */}
         <div style={{
           textAlign: 'center', padding: '12px', borderRadius: '10px',
           background: 'rgba(0,209,178,0.06)', border: '1px solid rgba(0,209,178,0.12)',
-        }}>
-          <p style={{
-            fontSize: '22px', fontWeight: 900, fontFamily: 'monospace',
-            color: wrColor(g.win_rate),
-          }}>
-            {g.win_rate}%
-          </p>
-          <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>Win Rate Global</p>
-        </div>
-
-        {/* ROI Picks Certificados ✓✓✓ */}
-        <div style={{
-          textAlign: 'center', padding: '12px', borderRadius: '10px',
-          background: g.roi_recomendados >= 0
-            ? 'rgba(46,213,115,0.06)' : 'rgba(239,68,68,0.06)',
-          border: g.roi_recomendados >= 0
-            ? '1px solid rgba(46,213,115,0.12)' : '1px solid rgba(239,68,68,0.12)',
-        }}>
-          <p style={{
-            fontSize: '22px', fontWeight: 900, fontFamily: 'monospace',
-            color: roiColor(g.roi_recomendados),
-          }}>
-            {roiSign(g.roi_recomendados)}%
-          </p>
-          <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>ROI Picks ✓✓✓</p>
-        </div>
-
-        {/* Total Picks */}
-        <div style={{
-          textAlign: 'center', padding: '12px', borderRadius: '10px',
-          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-        }}>
-          <p style={{ fontSize: '22px', fontWeight: 900, fontFamily: 'monospace', color: '#FFF' }}>
-            {g.total_picks.toLocaleString()}
-          </p>
-          <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>Picks Analizados</p>
-        </div>
-
-        {/* WR Últimos 30 días */}
-        <div style={{
-          textAlign: 'center', padding: '12px', borderRadius: '10px',
-          background: 'rgba(255,221,87,0.06)', border: '1px solid rgba(255,221,87,0.12)',
         }}>
           <p style={{
             fontSize: '22px', fontWeight: 900, fontFamily: 'monospace',
@@ -271,16 +235,72 @@ export default function StatsReales({ variant = 'full' }: Props) {
           }}>
             {m.win_rate}%
           </p>
-          <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>WR Últimos 30d</p>
+          <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>Win Rate Mes</p>
+        </div>
+
+        {/* ROI del Mes — Inteligente: si negativo, cambia enfoque */}
+        <div style={{
+          textAlign: 'center', padding: '12px', borderRadius: '10px',
+          background: m.roi >= 0
+            ? 'rgba(46,213,115,0.06)' : 'rgba(255,255,255,0.03)',
+          border: m.roi >= 0
+            ? '1px solid rgba(46,213,115,0.12)' : '1px solid rgba(255,255,255,0.06)',
+        }}>
+          {m.roi >= 0 ? (
+            <>
+              <p style={{
+                fontSize: '22px', fontWeight: 900, fontFamily: 'monospace',
+                color: roiColor(m.roi),
+              }}>
+                {roiSign(m.roi)}%
+              </p>
+              <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>ROI Mes</p>
+            </>
+          ) : (
+            <>
+              <p style={{
+                fontSize: '22px', fontWeight: 900, fontFamily: 'monospace',
+                color: m.ganadas > m.perdidas ? '#22C55E' : '#F59E0B',
+              }}>
+                +{m.ganadas - m.perdidas}
+              </p>
+              <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>Balance Neto</p>
+              <p style={{ fontSize: '8px', color: '#64748B', marginTop: '1px' }}>ROI en recuperación</p>
+            </>
+          )}
+        </div>
+
+        {/* Picks del Mes */}
+        <div style={{
+          textAlign: 'center', padding: '12px', borderRadius: '10px',
+          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <p style={{ fontSize: '22px', fontWeight: 900, fontFamily: 'monospace', color: '#FFF' }}>
+            {m.total.toLocaleString()}
+          </p>
+          <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>Picks Resueltos</p>
+        </div>
+
+        {/* Record G/P del Mes */}
+        <div style={{
+          textAlign: 'center', padding: '12px', borderRadius: '10px',
+          background: 'rgba(255,221,87,0.06)', border: '1px solid rgba(255,221,87,0.12)',
+        }}>
+          <p style={{ fontSize: '22px', fontWeight: 900, fontFamily: 'monospace', color: '#FFF' }}>
+            <span style={{ color: '#22C55E' }}>{m.ganadas}</span>
+            <span style={{ color: '#475569' }}>/</span>
+            <span style={{ color: '#EF4444' }}>{m.perdidas}</span>
+          </p>
+          <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '2px' }}>Ganadas / Perdidas</p>
         </div>
       </div>
 
-      {/* ── Barra ROI Certificados ── */}
+      {/* ── Barra ROI Certificados del MES ── */}
       <div style={{ marginTop: '12px', padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
           <span style={{ fontSize: '11px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Brain style={{ width: '12px', height: '12px', color: '#00D1B2' }} />
-            ROI Picks Certificados ✓✓✓ ({g.picks_recomendados} picks)
+            ROI Picks Certificados ✓✓✓ este mes ({g.picks_recomendados} picks)
           </span>
           <span style={{
             fontSize: '11px', fontWeight: 800, fontFamily: 'monospace',
@@ -303,11 +323,11 @@ export default function StatsReales({ variant = 'full' }: Props) {
           }} />
         </div>
         <p style={{ fontSize: '10px', color: '#64748B', marginTop: '6px', textAlign: 'center' }}>
-          Sigue solo los picks ✓✓✓ para máximo rendimiento · 1 unidad por pick · Verificado con {g.total_picks.toLocaleString()} picks históricos
+          Sigue solo los picks ✓✓✓ para máximo rendimiento · 1 unidad por pick · Datos del mes en curso
         </p>
       </div>
 
-      {/* ── IA Aprobó vs IA Rechazó — "Tu ventaja competitiva" ── */}
+      {/* ── IA Aprobó vs IA Rechazó — Mes en curso ── */}
       {filtroAprobada && filtroRechazada && (
         <div style={{
           marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px',
@@ -376,7 +396,7 @@ export default function StatsReales({ variant = 'full' }: Props) {
         </div>
       )}
 
-      {/* ── Protección IA — "Tu dinero, protegido" ── */}
+      {/* ── Protección IA — "Tu dinero, protegido" este mes ── */}
       {rechazadosPerdidos > 0 && rechazadosTotal > 0 && (
         <div style={{
           marginTop: '10px', padding: '10px 12px', borderRadius: '10px',
@@ -385,8 +405,8 @@ export default function StatsReales({ variant = 'full' }: Props) {
         }}>
           <Shield style={{ width: '16px', height: '16px', color: '#00D1B2', flexShrink: 0 }} />
           <p style={{ fontSize: '11px', color: '#94A3B8' }}>
-            La IA rechazó <strong style={{ color: '#EF4444' }}>{rechazadosTotal} picks</strong> que
-            habrían resultado en <strong style={{ color: '#EF4444' }}>{rechazadosPerdidos} pérdidas</strong>.
+            Este mes la IA rechazó <strong style={{ color: '#EF4444' }}>{rechazadosTotal} picks</strong> que
+            resultaron en <strong style={{ color: '#EF4444' }}>{rechazadosPerdidos} pérdidas</strong>.
             <span style={{ color: '#00D1B2', fontWeight: 700 }}> Tu dinero, protegido.</span>
           </p>
         </div>
@@ -402,11 +422,11 @@ export default function StatsReales({ variant = 'full' }: Props) {
         </span>
         {g.picks_recomendados > 0 && (
           <span style={{ fontSize: '10px', color: '#475569' }}>
-            ✓✓✓ Certificados: <strong style={{ color: '#00D1B2', fontFamily: 'monospace' }}>{g.picks_recomendados}</strong>
+            ✓✓✓ Certificados este mes: <strong style={{ color: '#00D1B2', fontFamily: 'monospace' }}>{g.picks_recomendados}</strong>
           </span>
         )}
         <span style={{ fontSize: '10px', color: '#475569' }}>
-          {stats.tipsters_activos}+ tipsters
+          {stats.tipsters_activos}+ tipsters · {g.total_picks} picks históricos
         </span>
       </div>
     </div>
